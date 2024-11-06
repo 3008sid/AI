@@ -1,0 +1,71 @@
+def print_solution(board, N):
+    for row in range(N):
+        print(" ".join("Q" if col == board[row] else "." for col in range(N)))
+    print("\n")
+
+# Backtracking approach
+def solve_n_queens_backtracking(N):
+    def is_safe(board, row, col):
+        return all(board[i] != col and board[i] - i != col - row and board[i] + i != col + row for i in range(row))
+
+    def backtrack(row):
+        if row == N:
+            print_solution(board, N)
+            return True
+        for col in range(N):
+            if is_safe(board, row, col):
+                board[row] = col
+                if backtrack(row + 1):
+                    return True
+        return False
+
+    board = [-1] * N
+    if not backtrack(0):
+        print("No solution")
+
+# Branch and Bound approach
+def solve_n_queens_branch_and_bound(N):
+    def branch_and_bound(row):
+        if row == N:
+            print_solution(board, N)
+            return True
+        for col in range(N):
+            if not col_used[col] and not slash[row + col] and not backslash[row - col + N - 1]:
+                board[row] = col
+                col_used[col], slash[row + col], backslash[row - col + N - 1] = True, True, True
+                if branch_and_bound(row + 1):
+                    return True
+                col_used[col], slash[row + col], backslash[row - col + N - 1] = False, False, False
+        return False
+
+    board = [-1] * N
+    col_used, slash, backslash = [False] * N, [False] * (2 * N), [False] * (2 * N)
+    if not branch_and_bound(0):
+        print("No solution")
+
+# Main Menu
+def main():
+    while True:
+        print("N-Queens Problem Menu")
+        print("1. Solve using Backtracking")
+        print("2. Solve using Branch and Bound")
+        print("3. Exit")
+        choice = input("Choose an option (1/2/3): ")
+
+        if choice in ['1', '2']:
+            N = int(input("Enter the number of queens (N): "))
+            if choice == '1':
+                print("Solving N-Queens using Backtracking:")
+                solve_n_queens_backtracking(N)
+            elif choice == '2':
+                print("Solving N-Queens using Branch and Bound:")
+                solve_n_queens_branch_and_bound(N)
+        elif choice == '3':
+            print("Exiting...")
+            break
+        else:
+            print("Invalid choice. Please select again.")
+
+# Run the menu
+if __name__ == "__main__":
+    main()

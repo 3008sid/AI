@@ -1,0 +1,43 @@
+DELIMITER $$
+
+CREATE PROCEDURE Merge_RollCall_Data (IN min_attendance INT, IN max_attendance INT)
+BEGIN
+    DECLARE v_roll INT;
+    DECLARE v_name VARCHAR(50);
+    DECLARE v_attendance INT;
+    DECLARE done INT DEFAULT 0;
+    
+    -- Declare a cursor with parameters: filtering based on attendance range
+    DECLARE rollcall_cursor CURSOR FOR
+        SELECT roll, name, attendance 
+        FROM N_RollCall
+        WHERE attendance BETWEEN min_attendance AND max_attendance;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    
+    OPEN rollcall_cursor;
+    
+    read_loop: LOOP
+        FETCH rollcall_cursor INTO v_roll, v_name, v_attendance;
+        
+        IF done = 1 THEN
+            LEAVE read_loop;
+        END IF;
+        
+        -- Insert into O_RollCall if the roll number does not already exist
+        IF NOT EXISTS (SELECT 1 FROM O_RollCall WHERE roll = v_roll) THEN
+            INSERT INTO O_RollCall (roll, name, attendance)
+            VALUES (v_roll, v_name, v_attendance);
+        END IF;
+    END LOOP;
+    
+    CLOSE rollcall_cursor;
+END$$
+
+DELIMITER ;
+
+-- Call the stored procedure with specific parameters for filtering attendance
+CALL Merge_RollCall_Data(80, 90);
+
+-- Verify the data after the procedure call
+SELECT * FROM O_RollCall;
