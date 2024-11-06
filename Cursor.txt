@@ -1,3 +1,29 @@
+CREATE TABLE O_RollCall (
+    roll INT PRIMARY KEY,
+    name VARCHAR(50),
+    attendance INT
+);
+
+CREATE TABLE N_RollCall (
+    roll INT PRIMARY KEY,
+    name VARCHAR(50),
+    attendance INT
+);
+INSERT INTO O_RollCall (roll, name, attendance) VALUES
+(1001, 'Amit Sharma', 85),
+(1002, 'Ravi Patel', 90),
+(1003, 'Sunita Verma', 78),
+(1004, 'Kavita Mehra', 80);
+
+INSERT INTO N_RollCall (roll, name, attendance) VALUES
+(1002, 'Ravi Patel', 90),    
+(1005, 'Manish Singh', 82),  
+(1006, 'Pooja Raj', 88),     
+(1001, 'Amit Sharma', 85);   
+
+SELECT * FROM O_RollCall;
+SELECT * FROM N_RollCall;
+
 DELIMITER $$
 
 CREATE PROCEDURE Merge_RollCall_Data (IN min_attendance INT, IN max_attendance INT)
