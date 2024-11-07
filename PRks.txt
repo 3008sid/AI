@@ -1,0 +1,89 @@
+import sys
+
+# Prim's Algorithm
+def prim_mst(graph, V):
+    selected = [False] * V
+    selected[0] = True
+    mst_edges = []
+
+    for _ in range(V - 1):
+        min_weight = sys.maxsize
+        x = y = 0
+        for u in range(V):
+            if selected[u]:
+                for v, weight in enumerate(graph[u]):
+                    if not selected[v] and weight and weight < min_weight:
+                        min_weight = weight
+                        x, y = u, v
+        mst_edges.append((x, y, min_weight))
+        selected[y] = True
+
+    print("Edges in MST using Prim's Algorithm:")
+    for u, v, weight in mst_edges:
+        print(f"{u} - {v}: {weight}")
+
+# Main function to take user input
+def main_prim():
+    V = int(input("Enter the number of vertices: "))
+    graph = []
+
+    print("Enter the adjacency matrix (enter 0 if there's no edge):")
+    for i in range(V):
+        row = list(map(int, input(f"Row {i + 1}: ").split()))
+        graph.append(row)
+
+    prim_mst(graph, V)
+
+main_prim()
+
+-------------------------------------------------------------------------------------------
+
+class DisjointSet:
+    def _init_(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, u):
+        if self.parent[u] != u:
+            self.parent[u] = self.find(self.parent[u])
+        return self.parent[u]
+
+    def union(self, u, v):
+        root_u = self.find(u)
+        root_v = self.find(v)
+        if root_u != root_v:
+            if self.rank[root_u] > self.rank[root_v]:
+                self.parent[root_v] = root_u
+            elif self.rank[root_u] < self.rank[root_v]:
+                self.parent[root_u] = root_v
+            else:
+                self.parent[root_v] = root_u
+                self.rank[root_u] += 1
+
+def kruskal_mst(edges, V):
+    edges.sort(key=lambda edge: edge[2])
+    dsu = DisjointSet(V)
+    mst_edges = []
+
+    for u, v, weight in edges:
+        if dsu.find(u) != dsu.find(v):
+            dsu.union(u, v)
+            mst_edges.append((u, v, weight))
+
+    print("Edges in MST using Kruskal's Algorithm:")
+    for u, v, weight in mst_edges:
+        print(f"{u} - {v}: {weight}")
+
+def get_edges_from_user():
+    V = int(input("Enter the number of vertices: "))
+    E = int(input("Enter the number of edges: "))
+    edges = []
+    print("Enter each edge in the format: vertex1 vertex2 weight")
+    for _ in range(E):
+        u, v, weight = map(int, input("Enter edge (u v weight): ").split())
+        edges.append((u, v, weight))
+    return edges, V
+
+# Main code
+edges, V = get_edges_from_user()
+kruskal_mst(edges, V)

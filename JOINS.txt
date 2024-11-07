@@ -1,0 +1,177 @@
+-- Creating the necessary tables
+
+-- Table for Departments
+CREATE TABLE departments (
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(255)
+);
+
+-- Table for Employees
+CREATE TABLE employees (
+    employee_id INT PRIMARY KEY,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    department_id INT,
+    manager_id INT,
+    salary DECIMAL(10, 2),
+    performance_rating INT,
+    FOREIGN KEY (department_id) REFERENCES departments(department_id),
+    FOREIGN KEY (manager_id) REFERENCES employees(employee_id)
+);
+
+-- Table for Projects
+CREATE TABLE projects (
+    project_id INT PRIMARY KEY,
+    project_name VARCHAR(255),
+    budget DECIMAL(10, 2)
+);
+
+-- Table for Employee-Project Assignments
+CREATE TABLE employee_projects (
+    employee_id INT,
+    project_id INT,
+    PRIMARY KEY (employee_id, project_id),
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+    FOREIGN KEY (project_id) REFERENCES projects(project_id)
+);
+
+-- Table for Sales
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY,
+    employee_id INT,
+    amount DECIMAL(10, 2),
+    customer_id INT,
+    sale_date DATE,
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+);
+
+-- Table for Customers
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255)
+);
+
+-- Inserting sample data into the tables
+
+-- Insert data into Departments
+INSERT INTO departments (department_id, department_name)
+VALUES (1, 'Sales'), (2, 'Engineering'), (3, 'Marketing');
+
+-- Insert data into Employees
+INSERT INTO employees (employee_id, first_name, last_name, department_id, manager_id, salary, performance_rating)
+VALUES 
+    (1, 'John', 'Doe', 1, NULL, 60000, 5),
+    (2, 'Jane', 'Smith', 1, 1, 55000, 4),
+    (3, 'Alice', 'Johnson', 2, NULL, 80000, 5),
+    (4, 'Bob', 'Williams', 3, NULL, 45000, 3),
+    (5, 'Charlie', 'Brown', 1, 1, 47000, 2);
+
+-- Insert data into Projects
+INSERT INTO projects (project_id, project_name, budget)
+VALUES 
+    (1, 'Project Alpha', 2000000),
+    (2, 'Project Beta', 500000),
+    (3, 'Project Gamma', 300000);
+
+-- Insert data into Employee-Project Assignments
+INSERT INTO employee_projects (employee_id, project_id)
+VALUES 
+    (1, 1),
+    (2, 1),
+    (3, 2),
+    (4, 3);
+
+-- Insert data into Sales
+INSERT INTO sales (sale_id, employee_id, amount, customer_id, sale_date)
+VALUES 
+    (1, 1, 5000, 1, '2024-01-01'),
+    (2, 2, 10000, 2, '2024-02-15'),
+    (3, 3, 7500, 1, '2024-03-10'),
+    (4, 1, 12000, 3, '2024-04-25');
+
+-- Insert data into Customers
+INSERT INTO customers (customer_id, first_name, last_name)
+VALUES 
+    (1, 'Michael', 'Green'),
+    (2, 'Sara', 'White'),
+    (3, 'David', 'Black');
+
+-- 10 SQL Queries demonstrating various concepts
+
+-- 1. INNER JOIN: Get all employees and their corresponding department information
+SELECT e.employee_id, e.first_name, e.last_name, d.department_name
+FROM employees e
+INNER JOIN departments d ON e.department_id = d.department_id;
+
+-- 2. LEFT JOIN: Get all employees and their corresponding department information, including employees without departments
+SELECT e.employee_id, e.first_name, e.last_name, d.department_name
+FROM employees e
+LEFT JOIN departments d ON e.department_id = d.department_id;
+
+-- 3. RIGHT JOIN: Get all departments and their employees, including departments with no employees
+SELECT e.employee_id, e.first_name, e.last_name, d.department_name
+FROM employees e
+RIGHT JOIN departments d ON e.department_id = d.department_id;
+
+-- 4. FULL OUTER JOIN: Get all employees and all departments, with NULLs for missing matches
+SELECT e.employee_id, e.first_name, e.last_name, d.department_name
+FROM employees e
+FULL OUTER JOIN departments d ON e.department_id = d.department_id;
+
+-- 5. SELF JOIN: Get employees and their managers (assuming manager is another employee)
+SELECT e1.employee_id, e1.first_name AS Employee, e2.first_name AS Manager
+FROM employees e1
+INNER JOIN employees e2 ON e1.manager_id = e2.employee_id;
+
+-- 6. Subquery in the WHERE clause: Find employees working on projects with budget greater than $1,000,000
+SELECT e.employee_id, e.first_name, e.last_name
+FROM employees e
+WHERE e.employee_id IN (
+    SELECT ep.employee_id
+    FROM employee_projects ep
+    INNER JOIN projects p ON ep.project_id = p.project_id
+    WHERE p.budget > 1000000
+);
+
+-- 7. Subquery in the SELECT clause: Calculate total sales for each customer
+SELECT c.customer_id, c.first_name, c.last_name, 
+       (SELECT SUM(s.amount) 
+        FROM sales s 
+        WHERE s.customer_id = c.customer_id) AS total_sales
+FROM customers c;
+
+-- 8. Subquery in the FROM clause: Get total sales per product, filtering products with sales above $500,000
+SELECT p.project_id, p.project_name, sales.total_sales
+FROM projects p
+INNER JOIN (
+    SELECT project_id, SUM(amount) AS total_sales
+    FROM sales
+    GROUP BY project_id
+) sales ON p.project_id = sales.project_id
+WHERE sales.total_sales > 500000;
+
+-- 9. Creating and using a View: Create a view for high-performance employees (performance rating > 4)
+CREATE VIEW high_performance_employees AS
+SELECT e.employee_id, e.first_name, e.last_name, e.performance_rating
+FROM employees e
+WHERE e.performance_rating > 4;
+
+-- Querying the view
+SELECT * FROM high_performance_employees;
+
+-- 10. JOIN with Aggregation and Grouping: Get total sales by department
+SELECT d.department_name, SUM(s.amount) AS total_sales
+FROM employees e
+INNER JOIN departments d ON e.department_id = d.department_id
+INNER JOIN sales s ON e.employee_id = s.employee_id
+GROUP BY d.department_name;
+
+-- Bonus Query: Update employee salary for those in the Sales department
+UPDATE employees e
+SET e.salary = e.salary * 1.10
+WHERE e.department_id = (
+    SELECT d.department_id
+    FROM departments d
+    WHERE d.department_name = 'Sales'
+);
